@@ -6,20 +6,41 @@ class MenuItem(val name: String, val price: Double)
 // Klasse, die das Menü verwaltet und die Menüelemente speichert
 class Menu {
     val items: MutableList<MenuItem> = mutableListOf()
+    val categories: MutableMap<String, MutableList<MenuItem>> = mutableMapOf()
 
+    fun addItem(category: String, item: MenuItem) {
+        val items = categories.getOrPut(category) { mutableListOf() }
+        items.add(item)
+    }
     // Methode, um ein Menüelement zum Menü hinzuzufügen
     fun addItem(item: MenuItem) {
         items.add(item)
     }
-
-    // Methode, um das gesamte Menü anzuzeigen
-    fun displayMenu() {
-        println("Menu:")
-        for ((index, item) in items.withIndex()) {
-            println("${index + 1}. ${item.name} - ${item.price}")
+    fun displayCategories() {
+        println("Categories:")
+        val indexOffset = 1
+        for ((index, category) in categories.keys.withIndex()) {
+            println("${index + indexOffset}. $category")
         }
     }
+    // Methode, um das gesamte Menü anzuzeigen
+    fun displayMenu(category: String) {
+        println("$category Menu:")
+        val items = categories[category]
+        if (items != null) {
+            for ((index, item) in items.withIndex()) {
+                println("${index + 1}. ${item.name} - ${item.price}")
+            }
+        } else {
+            println("Invalid category.")
+        }
+    }
+
+    fun displayMenu() {
+        TODO("Not yet implemented")
+    }
 }
+
 
 // Klasse, die einen einzelnen Tisch repräsentiert und die Bestellungen für diesen Tisch speichert
 class Table(val number: Int) {
@@ -67,23 +88,36 @@ class Cashier(val menu: Menu) {
 
             val table = tables[tableNumber]
             if (table != null) {
-                println("Menu:")
-                menu.displayMenu()
-
                 while (true) {
-                    print("Enter the item number (0 to finish ordering): ")
-                    val itemNumber = readLine()?.toIntOrNull()
+                    println("Categories:")
+                    menu.displayCategories()
 
-                    if (itemNumber == 0) {
+                    print("Enter the category number (0 to finish ordering): ")
+                    val categoryNumber = readLine()?.toIntOrNull()
+
+                    if (categoryNumber == 0) {
                         break
                     }
 
-                    val item = menu.items.getOrNull(itemNumber?.minus(1) ?: -1)
-                    if (item != null) {
-                        table.addToOrder(item)
-                        println("${item.name} added to the order.")
+                    val categories = menu.categories.keys.toList()
+                    val category = categories.getOrNull(categoryNumber?.minus(1) ?: -1)
+                    if (category != null) {
+                        println("$category Menu:")
+                        menu.displayMenu(category)
+
+                        print("Enter the item number: ")
+                        val itemNumber = readLine()?.toIntOrNull()
+
+                        val items = menu.categories[category]
+                        val item = items?.getOrNull(itemNumber?.minus(1) ?: -1)
+                        if (item != null) {
+                            table.addToOrder(item)
+                            println("${item.name} added to the order.")
+                        } else {
+                            println("Invalid item number.")
+                        }
                     } else {
-                        println("Invalid item number.")
+                        println("Invalid category number.")
                     }
                 }
 
@@ -93,6 +127,7 @@ class Cashier(val menu: Menu) {
             }
         }
     }
+
 
     // Methode, um einen Tisch zu schließen und die Gesamtsumme der Bestellung anzuzeigen
     fun closeTable(tableNumber: Int) {
@@ -189,14 +224,19 @@ class Cashier(val menu: Menu) {
 
     // Methode, um die App zu starten und die Benutzerinteraktion zu ermöglichen
     fun startApp() {
-        println("Welcome to the Cashier App!")
+        val blueColorCode = "\u001B[34m"
+        val blackColorCode = "\u001B[30m"
+        val resetColorCode = "\u001B[0m"
+        val redColorCode = "\u001B[31m"
+
+        println("${redColorCode}Welcome to the Cinderella${resetColorCode}")
 
         while (true) {
-            println("1. Open Table")
-            println("2. Close Table")
-            println("3. Display All Tables")
-            println("4. Exit")
-            print("Enter your choice: ")
+            println("${blueColorCode}1. Open Table${resetColorCode}")
+            println("${blueColorCode}2. Close Table${resetColorCode}")
+            println("${blueColorCode}3. Display All Tables${resetColorCode}")
+            println("${blueColorCode}4. Exit${resetColorCode}")
+            print("${blackColorCode}Enter your choice: ${resetColorCode}")
             val choice = readLine()?.toIntOrNull()
 
             when (choice) {
@@ -232,9 +272,15 @@ class Cashier(val menu: Menu) {
 fun main() {
     // Erstellen des Menüs und Hinzufügen von Menüelementen
     val menu = Menu()
-    menu.addItem(MenuItem("Water", 1.0))
-    menu.addItem(MenuItem("Coffee", 2.5))
-    menu.addItem(MenuItem("Cake", 3.0))
+    menu.addItem("Kuchen", MenuItem("Schokoladenkuchen", 3.5))
+    menu.addItem("Kuchen", MenuItem("Käsekuchen", 4.0))
+    menu.addItem("Warme Getränke", MenuItem("Kaffee", 2.0))
+    menu.addItem("Warme Getränke", MenuItem("Tee", 1.5))
+    menu.addItem("Kalte Getränke", MenuItem("Eistee", 2.5))
+    menu.addItem("Kalte Getränke", MenuItem("Limonade", 2.0))
+    menu.addItem("Alkohol", MenuItem("Bier", 4.5))
+    menu.addItem("Alkohol", MenuItem("Wein", 6.0))
+
 
     // Erstellen des Kassierers und Starten der App
     val cashier = Cashier(menu)
